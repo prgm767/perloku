@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 indent() {
   sed -u 's/^/       /'
@@ -7,32 +7,44 @@ indent() {
 BUILD_DIR=$1
 CACHE_DIR=$2
 
-PERL_VERSION="5.18.1"
-PERL_PACKAGE="perloku.s3.amazonaws.com/perl-$PERL_VERSION.tgz"
+PERL_VERSION="5.26.1"
+CONFIG_VERSION="a"
 
-VENDORED_PERL="$BUILD_DIR/vendor/perl"
+VENDORED_PERL="/app/vendor/perl"
+CACHED_PERL="$CACHE_DIR/perl-$PERL_VERSION-$CONFIG_VERSION.tar.bz2"
+if [ -f $CACHED_PERL ] && cd $BUILD_DIR; then
+  echo Restoring cached perl
+  tar xvjf $CACHED_PERL
+  echo All done.
+  exit
+fi
 
 echo "-----> Vendoring Perl"
 
-mkdir -p $VENDORED_PERL  && curl $PERL_PACKAGE -s -o -  | tar xzf - -C $VENDORED_PERL
-
-# Set up so we can use Perl right away
-export PATH="$VENDORED_PERL/bin:$PATH"
-export PERL5LIB="$VENDORED_PERL/lib/$PERL_VERSION:$VENDORED_PERL/lib/site_perl/$PERL_VERSION"
-
+mkdir -p $VENDORED_PERL || { echo "Can't create build dir"; exit 1; }
+cd $VENDORED_PERL
+export PERLBREW_HOME=$VENDORED_PERL/perlbrew
+export PERLBREW_ROOT=$VENDORED_PERL
+curl -L https://install.perlbrew.pl | bash
+source $VENDORED_PERL/etc/bashrc
+echo Perlbrew init
+perlbrew init
+echo Perlbrew cpanm
+perlbrew install-cpanm
+echo Perlbrew install
+perlbrew install perl-$PERL_VERSION
+echo Perlbrew use
+perlbrew use perl-$PERL_VERSION
 echo "Using Perl $PERL_VERSION" | indent
-
 if [ -f $BUILD_DIR/Makefile.PL ] || [ -f $BUILD_DIR/cpanfile ]; then
   echo "-----> Installing dependencies"
-  VENDOR_DEPS="$BUILD_DIR/vendor/perl-deps"
-  CACHE_DEPS="$CACHE_DIR/$PERL_VERSION/perl-deps"
-  CPANM="perl -S $(which cpanm) -l $CACHE_DEPS"
-
-  mkdir -p "$CACHE_DIR"
-  $CPANM --notest --installdeps "$BUILD_DIR" 2>&1 | indent
-
-  cp -R "$CACHE_DEPS" "$VENDOR_DEPS"
-
+  cpanm local::lib
+  cpanm --notest --installdeps $BUILD_DIR
   echo "Dependencies installed" | indent
 fi
 
+echo Caching perl
+cd /app && tar cvjf $CACHED_PERL .perlbrew vendor/perl
+echo Restoring cache
+cd $BUILD_DIR && tar xvjf $CACHED_PERL
+echo All done.
