@@ -22,7 +22,7 @@ fi
 echo "-----> Vendoring Perl"
 
 mkdir -p $VENDORED_PERL || { echo "Can't create build dir"; exit 1; }
-cd $VENDORED_PERL
+cd /app
 export PERLBREW_ROOT=$VENDORED_PERL
 curl -L https://install.perlbrew.pl | bash
 echo Perlbrew init
@@ -42,9 +42,11 @@ if [ -f $BUILD_DIR/Makefile.PL ] || [ -f $BUILD_DIR/cpanfile ]; then
   echo "Dependencies installed" | indent
 fi
 echo Removing build files
-rm -r vendor/perl/{build,dists}
+rm -r /app/vendor/perl/{build,dists}
+echo Creating bashrc
+echo source /app/vendor/perl/etc/bashrc >> /app/.bashrc
 echo Caching perl
-cd /app && tar cjf $CACHED_PERL .perlbrew vendor/perl
+cd /app && tar cjf $CACHED_PERL .bashrc .perlbrew vendor/perl
 echo Restoring cache
 cd $BUILD_DIR && tar xjf $CACHED_PERL
 echo All done.
