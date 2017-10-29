@@ -1,8 +1,10 @@
 #!/bin/bash
 
 indent() {
-  sed -u 's/^/       /'
+  echo '       ' $@
 }
+
+cd /app
 
 BUILD_DIR=$1
 CACHE_DIR=$2
@@ -10,43 +12,49 @@ CACHE_DIR=$2
 PERL_VERSION="5.26.1"
 CONFIG_VERSION="b"
 
+if [ -f perloku.override ]; then
+  indent Sourcing app-specific overrides
+  source perloku.override
+fi
+
 VENDORED_PERL="/app/vendor/perl"
 CACHED_PERL="$CACHE_DIR/perl-$PERL_VERSION-$CONFIG_VERSION.tar.bz2"
 if [ -f $CACHED_PERL ] && cd $BUILD_DIR; then
-  echo Restoring cached perl
+  indent Restoring cached perl
   tar xjf $CACHED_PERL
-  echo All done.
+  indent All done.
   exit
 fi
 
 echo "-----> Vendoring Perl"
 
 mkdir -p $VENDORED_PERL || { echo "Can't create build dir"; exit 1; }
-cd /app
 export PERLBREW_ROOT=$VENDORED_PERL
 curl -L https://install.perlbrew.pl | bash
-echo Perlbrew init
+indent Perlbrew init
 source $VENDORED_PERL/etc/bashrc
 perlbrew init
-echo Perlbrew cpanm
+indent Perlbrew cpanm
 perlbrew install-cpanm
-echo Perlbrew install
+indent Perlbrew install
 perlbrew install perl-$PERL_VERSION
-echo Switching to new perl.
+indent Switching to new perl.
 perlbrew switch perl-$PERL_VERSION
-echo "Using Perl $PERL_VERSION" | indent
+indent "Using Perl $PERL_VERSION"
 if [ -f $BUILD_DIR/Makefile.PL ] || [ -f $BUILD_DIR/cpanfile ]; then
   echo "-----> Installing dependencies"
   cpanm local::lib
   cpanm --notest --installdeps $BUILD_DIR
-  echo "Dependencies installed" | indent
+  indent "Dependencies installed"
 fi
-echo Removing build files
+indent Removing build files
 rm -r /app/vendor/perl/{build,dists}
-echo Creating bashrc
+indent Creating bashrc
 echo source /app/vendor/perl/etc/bashrc >> /app/.bashrc
-echo Caching perl
+indent Caching perl
 cd /app && tar cjf $CACHED_PERL .bashrc .perlbrew vendor/perl
-echo Restoring cache
+indent Restoring cache
 cd $BUILD_DIR && tar xjf $CACHED_PERL
-echo All done.
+indent Saving perl in app-directory
+cp $CACHED_PERL /app/
+indent All done.
