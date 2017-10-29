@@ -1,7 +1,7 @@
 #!/bin/bash
 
 indent() {
-  echo '       ' $@
+  echo '      ' $@
 }
 
 cd /app
@@ -12,9 +12,19 @@ CACHE_DIR=$2
 PERL_VERSION="5.26.1"
 CONFIG_VERSION="b"
 
-if [ -f perloku.override ]; then
+if [ -f /app/perloku.override ]; then
   indent Sourcing app-specific overrides
-  source perloku.override
+  source /app/perloku.override
+fi
+
+if [ -f $BUILD_DIR/perloku.override ]; then
+  indent Sourcing app-specific overrides in BUILD_DIR
+  source $BUILD_DIR/perloku.override
+fi
+
+if [ -f $CACHE_DIR/perloku.override ]; then
+  indent Sourcing app-specific overrides in CACHE_DIR
+  source $CACHE_DIR/perloku.override
 fi
 
 VENDORED_PERL="/app/vendor/perl"
