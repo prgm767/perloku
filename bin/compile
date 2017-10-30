@@ -9,6 +9,8 @@ cd /app
 BUILD_DIR=$1
 CACHE_DIR=$2
 
+mkdir -p $CACHE_DIR
+
 PERL_VERSION="5.26.1"
 CONFIG_VERSION="c"
 
