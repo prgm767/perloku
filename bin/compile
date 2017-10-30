@@ -30,23 +30,33 @@ echo "-----> Vendoring Perl"
 
 mkdir -p $VENDORED_PERL || { echo "Can't create build dir"; exit 1; }
 export PERLBREW_ROOT=$VENDORED_PERL
-curl -L https://install.perlbrew.pl | bash
-indent Perlbrew init
-source $VENDORED_PERL/etc/bashrc
-perlbrew init
-indent Perlbrew cpanm
-perlbrew install-cpanm
-indent Perlbrew install
-perlbrew install perl-$PERL_VERSION
-indent Switching to new perl.
-perlbrew switch perl-$PERL_VERSION
-indent "Using Perl $PERL_VERSION"
+GITHUB=https://github.com/prgm767/perloku/releases/download/perl-$PERL_VERSION/perl-$PERL_VERSION.tar.bz2
+indent Checking for release on Github
+if curl $GITHUB | tar xjf - 2>/dev/null &&
+    test -f vendor/perl/bin/perlbrew ; then
+  indent Found
+  source $VENDORED_PERL/etc/bashrc
+else
+  curl -L https://install.perlbrew.pl | bash
+  indent Perlbrew init
+  source $VENDORED_PERL/etc/bashrc
+  perlbrew init
+  indent Perlbrew cpanm
+  perlbrew install-cpanm
+  indent Perlbrew install
+  perlbrew install perl-$PERL_VERSION
+  indent Switching to new perl.
+  perlbrew switch perl-$PERL_VERSION
+  indent "Using Perl $PERL_VERSION"
+fi
+
 if [ -f $BUILD_DIR/Makefile.PL ] || [ -f $BUILD_DIR/cpanfile ]; then
   echo "-----> Installing dependencies"
   cpanm local::lib
   cpanm --notest --installdeps $BUILD_DIR
   indent "Dependencies installed"
 fi
+
 indent Removing build files
 rm -r /app/vendor/perl/{build,dists}
 indent Creating bashrc
