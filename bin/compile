@@ -10,7 +10,7 @@ BUILD_DIR=$1
 CACHE_DIR=$2
 
 PERL_VERSION="5.26.1"
-CONFIG_VERSION="b"
+CONFIG_VERSION="c"
 
 if [ -f $BUILD_DIR/perloku.override ]; then
   indent Sourcing app-specific overrides in BUILD_DIR
@@ -55,6 +55,6 @@ indent Caching perl
 cd /app && tar cjf $CACHED_PERL .bashrc .perlbrew vendor/perl
 indent Restoring cache
 cd $BUILD_DIR && tar xjf $CACHED_PERL
-indent Saving perl in app-directory
-cp $CACHED_PERL /app/
+indent Saving perl in BUILD_DIR
+cp $CACHED_PERL $BUILD_DIR
 indent All done.
