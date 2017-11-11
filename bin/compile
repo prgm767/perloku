@@ -12,7 +12,7 @@ CACHE_DIR=$2
 mkdir -p $CACHE_DIR
 
 PERL_VERSION="5.26.1"
-CONFIG_VERSION="c"
+CONFIG_VERSION=$(cat $BUILD_DIR/Makefile.pl $BUILD_DIR/cpanfile 2>/dev/null | md5sum | cut -c1-32)
 PERL=perl-$PERL_VERSION-$CONFIG_VERSION
 
 if [ -f $BUILD_DIR/perloku.override ]; then
