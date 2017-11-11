@@ -12,13 +12,12 @@ CACHE_DIR=$2
 mkdir -p $CACHE_DIR
 
 PERL_VERSION="5.26.1"
-CONFIG_VERSION=$(cat $BUILD_DIR/Makefile.pl $BUILD_DIR/cpanfile 2>/dev/null | md5sum | cut -c1-32)
-PERL=perl-$PERL_VERSION-$CONFIG_VERSION
-
+CONFIG_VERSION=$(cat $BUILD_DIR/Makefile.PL $BUILD_DIR/cpanfile  | md5sum | cut -c1-32)
 if [ -f $BUILD_DIR/perloku.override ]; then
   indent Sourcing app-specific overrides in BUILD_DIR
   source $BUILD_DIR/perloku.override
 fi
+PERL=perl-$PERL_VERSION-$CONFIG_VERSION
 
 VENDORED_PERL="/app/vendor/perl"
 CACHED_PERL="$CACHE_DIR/$PERL.tar.bz2"
